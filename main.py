@@ -1,20 +1,20 @@
 import json,os,sys,urllib.request as u,urllib.error as e
 E=os.getenv("MAKEFUN_ENV_URL")or sys.exit()
 V={c:100for c in"Pp"}|{c:320for c in"Nn"}|{c:330for c in"Bb"}|{c:500for c in"Rr"}|{c:900for c in"Qq"}|{c:20000for c in"Kk"}
-def B(f):
- b={};r=7;f=0
- for c in f.split()[0]:
-  if c=="/":r-=1;f=0
-  elif c.isdigit():f+=int(c)
-  else:b[chr(f+97)+str(r+1)]=c;f+=1
+def B(fen):
+ b={};r=7;fl=0
+ for c in fen.split()[0]:
+  if c=="/":r-=1;fl=0
+  elif c.isdigit():fl+=int(c)
+  else:b[chr(fl+97)+str(r+1)]=c;fl+=1
  return b
 def S(b,t):return sum(V[p]if p.isupper()else-V[p]for p in b.values())*(1if t=="w"else-1)
 def M(b,m,t):
- b=b.copy();f,t=m[:2],m[2:4];p=b.pop(f);b[t]=m[4]if len(m)==5 else p
- if p in"Pp"and abs(int(f[1])-int(t[1]))==2:return b,chr((("abcdefgh".index(f[0])+("abcdefgh".index(t[0])))//2)+97)+str((int(f[1])+int(t[1]))//2)
- if p in"Kk"and abs(ord(f[0])-ord(t[0]))==2:
-  if t[0]=="g":b["f"+f[1]],b["h"+f[1]]=b.pop("f"+f[1]),b.pop("h"+f[1])
-  else:b["d"+f[1]],b["a"+f[1]]=b.pop("d"+f[1]),b.pop("a"+f[1])
+ b=b.copy();fr,to=m[:2],m[2:4];p=b.pop(fr);b[to]=m[4]if len(m)==5 else p
+ if p in"Pp"and abs(int(fr[1])-int(to[1]))==2:return b,chr((("abcdefgh".index(fr[0])+("abcdefgh".index(to[0])))//2)+97)+str((int(fr[1])+int(to[1]))//2)
+ if p in"Kk"and abs(ord(fr[0])-ord(to[0]))==2:
+  if to[0]=="g":b["f"+fr[1]],b["h"+fr[1]]=b.pop("f"+fr[1]),b.pop("h"+fr[1])
+  else:b["d"+fr[1]],b["a"+fr[1]]=b.pop("d"+fr[1]),b.pop("a"+fr[1])
  return b,None
 def P(p,d):
  try:
