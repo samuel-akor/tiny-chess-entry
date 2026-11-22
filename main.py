@@ -1,6 +1,7 @@
 import json,os,sys,urllib.request as u,urllib.error as e
 E=os.getenv("MAKEFUN_ENV_URL")or sys.exit()
 V={c:100for c in"Pp"}|{c:320for c in"Nn"}|{c:330for c in"Bb"}|{c:500for c in"Rr"}|{c:900for c in"Qq"}|{c:20000for c in"Kk"}
+P={'P':[0]*8+[50]*8+[10,10,20,30,30,20,10,10]+[5,5,10,25,25,10,5,5]+[0,0,0,20,20,0,0,0]+[5,-5,-10,0,0,-10,-5,5]+[5,10,10,-20,-20,10,10,5]+[0]*8,'N':[-50,-40,-30,-30,-30,-30,-40,-50,-40,-20,0,0,0,0,-20,-40,-30,0,10,15,15,10,0,-30,-30,5,15,20,20,15,5,-30,-30,0,15,20,20,15,0,-30,-30,5,10,15,15,10,5,-30,-40,-20,0,5,5,0,-20,-40,-50,-40,-30,-30,-30,-30,-40,-50],'B':[-20,-10,-10,-10,-10,-10,-10,-20,-10,0,0,0,0,0,0,-10,-10,0,5,10,10,5,0,-10,-10,5,5,10,10,5,5,-10,-10,0,10,10,10,10,0,-10,-10,10,10,10,10,10,10,-10,-10,5,0,0,0,0,5,-10,-20,-10,-10,-10,-10,-10,-10,-20],'R':[0]*8+[5,10,10,10,10,10,10,5]+[-5,0,0,0,0,0,0,-5]*5+[0]*8,'Q':[-20,-10,-10,-5,-5,-10,-10,-20,-10,0,0,0,0,0,0,-10,-10,0,5,5,5,5,0,-10,-5,0,5,5,5,5,0,-5,0,0,5,5,5,5,0,-5,-10,5,5,5,5,5,0,-10,-10,0,5,0,0,0,0,-10,-20,-10,-10,-5,-5,-10,-10,-20],'K':[-30,-40,-40,-50,-50,-40,-40,-30]*4+[-20,-30,-30,-40,-40,-30,-30,-20]+[-10,-20,-20,-20,-20,-20,-20,-10]+[20,20,0,0,0,0,20,20]+[20,30,10,0,0,10,30,20]}
 def B(fen):
  b={};r=7;fl=0
  for c in fen.split()[0]:
@@ -8,7 +9,12 @@ def B(fen):
   elif c.isdigit():fl+=int(c)
   else:b[chr(fl+97)+str(r+1)]=c;fl+=1
  return b
-def S(b,t):return sum(V[p]if p.isupper()else-V[p]for p in b.values())*(1if t=="w"else-1)
+def S(b,t):
+ s=0
+ for sq,p in b.items():
+  u=p.upper();i="abcdefgh".index(sq[0])+(8-int(sq[1]))*8;v=V[u]+P[u][i^(0 if p.isupper()else 56)]
+  s+=v if p.isupper()else -v
+ return s if t=="w"else -s
 def M(b,m,t):
  b=b.copy();fr,to=m[:2],m[2:4];p=b.pop(fr);b[to]=m[4]if len(m)==5 else p
  if p in"Pp"and abs(int(fr[1])-int(to[1]))==2:return b,chr((("abcdefgh".index(fr[0])+("abcdefgh".index(to[0])))//2)+97)+str((int(fr[1])+int(to[1]))//2)
@@ -16,22 +22,34 @@ def M(b,m,t):
   if to[0]=="g":b["f"+fr[1]],b["h"+fr[1]]=b.pop("f"+fr[1]),b.pop("h"+fr[1])
   else:b["d"+fr[1]],b["a"+fr[1]]=b.pop("d"+fr[1]),b.pop("a"+fr[1])
  return b,None
-def A(b,lms,t,d,a,b_,n,mx):
+def O(b,ms):
+ return sorted(ms,key=lambda m:V.get(b.get(m[2:4],'.').upper(),0)*10-V.get(b.get(m[:2],'.').upper(),0),reverse=True)
+def Q(b,t,a,bt,n,mx):
+ if n[0]>=mx:return S(b,t)
+ s=S(b,t)
+ if s>=bt:return bt
+ if s>a:a=s
+ for m in [x for x in t["legal_moves"]if b.get(x[2:4],'.')!='.']:
+  nb,_=M(b,m,t);sc=-Q(nb,"b"if t=="w"else"w",-bt,-a,n,mx)
+  if sc>=bt:return bt
+  if sc>a:a=sc
+ return a
+def A(b,lms,t,d,a,bt,n,mx):
  if n[0]>=mx:return None,0
  if d==0:return lms[0],S(b,t)
  n[0]+=1
- bm,bs=None, -20001 if t=="w" else 20001
- for m in lms:
-  nb,_=M(b,m,t);ot="b"if t=="w"else"w"
-  _,s=A(nb,g["legal_moves"],ot,d-1,-b_,-a,n,mx) if d>1 else (None,S(nb,t))
-  s=-s if d>1 else s
+ bm,bs=None,-20001 if t=="w"else 20001
+ for m in O(b,lms):
+  nb,_=M(b,m,t)
+  if d==1:_,sc=lms[0],S(nb,t)
+  else:_,sc=A(nb,[],"b"if t=="w"else"w",d-1,-bt,-a,n,mx);sc=-sc
   if t=="w":
-   if s>bs:bm,bs=m,s
-   if s>a:a=s
+   if sc>bs:bm,bs=m,sc
+   if sc>a:a=sc
   else:
-   if s<bs:bm,bs=m,s
-   if s<b_:b_=s
-  if a>=b_:break
+   if sc<bs:bm,bs=m,sc
+   if sc<bt:bt=sc
+  if a>=bt:break
  return bm,bs
 def P(p,d):
  try:
