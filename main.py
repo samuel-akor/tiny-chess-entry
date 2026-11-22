@@ -16,18 +16,15 @@ def M(b,m,t):
   if to[0]=="g":b["f"+fr[1]],b["h"+fr[1]]=b.pop("f"+fr[1]),b.pop("h"+fr[1])
   else:b["d"+fr[1]],b["a"+fr[1]]=b.pop("d"+fr[1]),b.pop("a"+fr[1])
  return b,None
-def A(b,l,t,ot,n,mx,a,b_,d):
- if n[0]>=mx or not l:return None,0 if t=="w"else-20000
- if d==0:return l[0],S(b,t)
+def A(b,lms,t,d,a,b_,n,mx):
+ if n[0]>=mx:return None,0
+ if d==0:return lms[0],S(b,t)
  n[0]+=1
- bm,bs=None,-20001 if t=="w"else 20001
- for m in l:
-  nb,_=M(b,m,t)
-  if d==1:s=S(nb,t)
-  else:
-   ol=g["legal_moves"] if "g"in dir()else None
-   _,s=A(nb,ol or[],ot,t,n,mx,-b_,-a,d-1)
-   s=-s
+ bm,bs=None, -20001 if t=="w" else 20001
+ for m in lms:
+  nb,_=M(b,m,t);ot="b"if t=="w"else"w"
+  _,s=A(nb,g["legal_moves"],ot,d-1,-b_,-a,n,mx) if d>1 else (None,S(nb,t))
+  s=-s if d>1 else s
   if t=="w":
    if s>bs:bm,bs=m,s
    if s>a:a=s
@@ -45,7 +42,7 @@ while 1:
  if g["status"]=="done":break
  while g["status"]=="your_move":
   b=B(g["fen"]);t="w"if g["colour"]=="white"else"b";l=g["legal_moves"];n=[0];mx=50000
-  bm,bs=A(b,l,t,"b"if t=="w"else"w",n,mx,-20001,20001,3)
+  bm,bs=A(b,l,t,3,-20001,20001,n,mx)
   if bm is None:bm=l[0]
   g=P("/move",{"game":g["game"],"move":bm})
  if g["status"]=="over":print(f"game {g['game']}: {g['outcome']} by {g['reason']}",file=sys.stderr)
