@@ -16,6 +16,26 @@ def M(b,m,t):
   if to[0]=="g":b["f"+fr[1]],b["h"+fr[1]]=b.pop("f"+fr[1]),b.pop("h"+fr[1])
   else:b["d"+fr[1]],b["a"+fr[1]]=b.pop("d"+fr[1]),b.pop("a"+fr[1])
  return b,None
+def A(b,l,t,ot,n,mx,a,b_,d):
+ if n[0]>=mx or not l:return None,0 if t=="w"else-20000
+ if d==0:return l[0],S(b,t)
+ n[0]+=1
+ bm,bs=None,-20001 if t=="w"else 20001
+ for m in l:
+  nb,_=M(b,m,t)
+  if d==1:s=S(nb,t)
+  else:
+   ol=g["legal_moves"] if "g"in dir()else None
+   _,s=A(nb,ol or[],ot,t,n,mx,-b_,-a,d-1)
+   s=-s
+  if t=="w":
+   if s>bs:bm,bs=m,s
+   if s>a:a=s
+  else:
+   if s<bs:bm,bs=m,s
+   if s<b_:b_=s
+  if a>=b_:break
+ return bm,bs
 def P(p,d):
  try:
   with u.urlopen(u.Request(E+p,data=json.dumps(d).encode(),headers={"content-type":"application/json"}))as r:return json.load(r)
@@ -24,10 +44,9 @@ while 1:
  g=P("/game",{})
  if g["status"]=="done":break
  while g["status"]=="your_move":
-  b=B(g["fen"]);t="w"if g["colour"]=="white"else"b";l=g["legal_moves"];bm=None;bs=-20001
-  for m in l:
-   nb,_=M(b,m,t);ot="b"if t=="w"else"w";s=-S(nb,ot)
-   if s>bs:bm,bs=m,s
+  b=B(g["fen"]);t="w"if g["colour"]=="white"else"b";l=g["legal_moves"];n=[0];mx=50000
+  bm,bs=A(b,l,t,"b"if t=="w"else"w",n,mx,-20001,20001,3)
+  if bm is None:bm=l[0]
   g=P("/move",{"game":g["game"],"move":bm})
  if g["status"]=="over":print(f"game {g['game']}: {g['outcome']} by {g['reason']}",file=sys.stderr)
 print(f"done: {g.get('wins')} won, {g.get('draws')} drawn, {g.get('losses')} lost",file=sys.stderr)
